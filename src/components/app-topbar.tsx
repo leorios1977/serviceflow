@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { useOrg } from "@/lib/org-context";
 import { signOut } from "@/app/(auth)/actions";
 import { MobileSidebarNav } from "./mobile-sidebar-nav";
@@ -24,11 +24,11 @@ export function AppTopbar() {
     <header className="flex h-16 items-center justify-between border-b bg-card px-4 lg:px-6">
       {/* Mobile menu */}
       <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle menu</span>
-          </Button>
+        <SheetTrigger
+          className="lg:hidden inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
           <MobileSidebarNav />
@@ -37,23 +37,20 @@ export function AppTopbar() {
 
       {/* Org Switcher */}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="gap-2 max-w-[200px] lg:max-w-[250px]"
-          >
-            <div className="h-5 w-5 rounded bg-primary/10 flex items-center justify-center">
-              <span className="text-[10px] font-bold text-primary">
-                {currentOrg?.name?.charAt(0) || "?"}
-              </span>
-            </div>
-            <span className="truncate text-sm">
-              {currentOrg?.name || "Select org"}
+        <DropdownMenuTrigger
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 max-w-[200px] lg:max-w-[250px]"
+        >
+          <div className="h-5 w-5 rounded bg-primary/10 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-primary">
+              {currentOrg?.name?.charAt(0) || "?"}
             </span>
-            <ChevronsUpDown className="h-3 w-3 opacity-50" />
-          </Button>
+          </div>
+          <span className="truncate text-sm">
+            {currentOrg?.name || "Select org"}
+          </span>
+          <ChevronsUpDown className="h-3 w-3 opacity-50" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-[200px]">
+        <DropdownMenuContent align="start">
           <DropdownMenuLabel>Organizations</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {orgs.map((org) => (
