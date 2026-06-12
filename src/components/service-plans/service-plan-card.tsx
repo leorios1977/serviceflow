@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { ServicePlan } from "@/lib/database.types";
+import type { ServicePlan, Frequency } from "@/lib/database.types";
 import { Pencil, Trash2, Play, Pause } from "lucide-react";
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -24,6 +24,38 @@ interface ServicePlanCardProps {
   onDeleted: () => void;
 }
 
+/**
+ * Compute the next N scheduled visit dates starting from today,
+ * aligned to the given day_of_week and frequency.
+ */
+function generateScheduledDates(
+  frequency: Frequency,
+  dayOfWeek: number,
+  count: number
+): string[] {
+  const dates: string[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let cursor = new Date(today);
+  const diff = (dayOfWeek - cursor.getDay() + 7) % 7;
+  cursor.setDate(cursor.getDate() + (diff === 0 ? 0 : diff));
+
+  const intervalDays: Record<Frequency, number> = {
+    weekly: 7,
+    biweekly: 14,
+    monthly: 30,
+    quarterly: 91,
+  };
+
+  for (let i = 0; i < count; i++) {
+    dates.push(cursor.toISOString().split("T")[0]);
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + intervalDays[frequency]);
+  }
+  return dates;
+}
+
 export function ServicePlanCard({ plan, onEdit, onDeleted }: ServicePlanCardProps) {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -32,14 +64,38 @@ export function ServicePlanCard({ plan, onEdit, onDeleted }: ServicePlanCardProp
     setToggling(true);
     const supabase = createClient();
     const newStatus = plan.status === "active" ? "paused" : "active";
+
     const { error } = await supabase
       .from("service_plans")
       .update({ status: newStatus })
       .eq("id", plan.id);
+
     if (error) {
       toast.error("Failed to update plan status");
     } else {
       toast.success(`Plan ${newStatus === "active" ? "activated" : "paused"}`);
+
+      // Auto-generate next 4 visits when re-activating a paused plan
+      if (newStatus === "active" && plan.day_of_week !== null) {
+        const dates = generateScheduledDates(plan.frequency, plan.day_of_week, 4);
+        const visitRows = dates.map((date) => ({
+          org_id: plan.org_id,
+          property_id: plan.property_id,
+          scheduled_date: date,
+          status: "scheduled" as const,
+          checklist: [],
+          photos: [],
+        }));
+        const { error: visitsError } = await supabase
+          .from("visits")
+          .insert(visitRows);
+        if (visitsError) {
+          toast.warning("Plan activated, but failed to generate visits");
+        } else {
+          toast.success(`Generated ${dates.length} upcoming visits`);
+        }
+      }
+
       onDeleted(); // refresh parent
     }
     setToggling(false);
