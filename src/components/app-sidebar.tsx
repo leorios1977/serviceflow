@@ -11,12 +11,14 @@ import {
   FileText,
   Receipt,
   Settings,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/customers", label: "Customers", icon: Users },
+  { href: "/leads", label: "Leads", icon: Target },
   { href: "/schedule", label: "Schedule", icon: Calendar },
   { href: "/routes", label: "Routes", icon: MapPin },
   { href: "/today", label: "Today", icon: Sun },
